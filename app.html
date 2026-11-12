@@ -1,0 +1,192 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=600, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>BlackBook Glasses</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { width: 600px; height: 600px; overflow: hidden; background: #000; }
+  body { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; color: #fff; -webkit-font-smoothing: antialiased; user-select: none; -webkit-user-select: none; }
+  #deck { display: flex; width: 1800px; height: 600px; transition: transform .28s ease-out; }
+  .screen { width: 600px; height: 600px; flex: 0 0 600px; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 44px 44px 64px; text-align: center; }
+  .label { font-size: 26px; letter-spacing: 6px; text-transform: uppercase; color: #7dd3fc; font-weight: 600; margin-bottom: 10px; }
+  .bignum { font-size: 120px; line-height: 1; font-weight: 700; font-variant-numeric: tabular-nums; }
+  .bignum small { font-size: 56px; color: #bbb; }
+  .sub { font-size: 28px; color: #bbb; margin-top: 10px; line-height: 1.35; }
+  .vehicle { font-size: 34px; font-weight: 700; line-height: 1.25; margin-bottom: 6px; }
+  .meta { font-size: 26px; color: #aaa; margin-bottom: 18px; }
+  .row { display: flex; justify-content: space-between; align-items: baseline; width: 100%; padding: 14px 6px; border-bottom: 1px solid #222; }
+  .row .k { font-size: 28px; letter-spacing: 3px; text-transform: uppercase; color: #7dd3fc; font-weight: 600; }
+  .row .v { font-size: 58px; font-weight: 700; font-variant-numeric: tabular-nums; }
+  .row .v small { font-size: 26px; color: #bbb; font-weight: 500; }
+  .grid { width: 100%; margin-top: 8px; }
+  .grid .g-row { display: flex; justify-content: space-between; font-size: 30px; padding: 8px 6px; border-bottom: 1px solid #1a1a1a; color: #ddd; }
+  .grid .g-row b { font-variant-numeric: tabular-nums; }
+  input { width: 100%; font-size: 36px; padding: 16px 18px; margin: 10px 0; background: #111; color: #fff; border: 2px solid #333; border-radius: 12px; text-transform: uppercase; font-family: inherit; }
+  input:focus { border-color: #7dd3fc; outline: none; }
+  input.km { text-transform: none; }
+  button { width: 100%; font-size: 36px; font-weight: 700; padding: 18px; margin-top: 14px; background: #0ea5e9; color: #fff; border: none; border-radius: 12px; font-family: inherit; }
+  button:active { background: #0284c7; }
+  .hint { font-size: 24px; color: #888; margin-top: 14px; line-height: 1.4; }
+  .region { font-size: 26px; color: #4ade80; letter-spacing: 2px; text-transform: uppercase; font-weight: 600; margin-top: 6px; }
+  #footer { position: fixed; left: 0; right: 0; bottom: 0; height: 52px; width: 600px; display: flex; align-items: center; justify-content: center; gap: 14px; font-size: 22px; color: #888; background: #000; }
+  #footer .pagedot { width: 14px; height: 14px; border-radius: 50%; background: #333; }
+  #footer .pagedot.on { background: #fff; }
+  #err { position: fixed; left: 0; right: 0; top: 0; width: 600px; padding: 10px; background: #7f1d1d; color: #fff; font-size: 22px; text-align: center; display: none; z-index: 10; }
+  .recent { width: 100%; margin-top: 16px; text-align: left; }
+  .recent div { font-size: 26px; color: #ddd; padding: 8px 6px; border-bottom: 1px solid #1a1a1a; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+</style>
+</head>
+<body>
+<div id="err"></div>
+<div id="deck">
+  <!-- Screen 1: Lookup -->
+  <section class="screen" id="screen-lookup">
+    <div class="label">Black Book &middot; Cherry</div>
+    <div class="vehicle">Value a vehicle</div>
+    <div class="region">Region: Ontario &middot; locked</div>
+    <input id="vin" type="text" placeholder="VIN — 17 characters" maxlength="17" autocomplete="off" autocapitalize="characters" spellcheck="false">
+    <input id="km" class="km" type="number" inputmode="numeric" placeholder="Kilometres" value="56000" min="0" max="999999">
+    <button id="go">Get values</button>
+    <div class="hint">Enter a VIN and km, or open with ?vin=…&amp;km=…<br>Swipe for results &middot; values are Cherry, Ontario</div>
+    <div class="recent" id="recent"></div>
+  </section>
+  <!-- Screen 2: Results — AVG -->
+  <section class="screen" id="screen-results">
+    <div class="label" id="res-vehicle">—</div>
+    <div class="meta" id="res-meta">Ontario &middot; — km</div>
+    <div class="row"><span class="k">Wholesale</span><span class="v" id="w-avg">—</span></div>
+    <div class="row"><span class="k">Retail</span><span class="v" id="r-avg">—</span></div>
+    <div class="row"><span class="k">Trade-in</span><span class="v" id="t-avg">—</span></div>
+    <div class="row"><span class="k">Loan value</span><span class="v" id="loan">—</span></div>
+    <div class="hint" id="res-note"></div>
+  </section>
+  <!-- Screen 3: Detail — condition breakdown -->
+  <section class="screen" id="screen-detail">
+    <div class="label">Adjusted &middot; by condition</div>
+    <div class="grid" id="detail"></div>
+    <div class="hint" id="detail-note">Adjusted = Base + mileage (Ontario region: $0)</div>
+  </section>
+</div>
+<div id="footer">
+  <span class="pagedot on" id="dot0"></span>
+  <span class="pagedot" id="dot1"></span>
+  <span class="pagedot" id="dot2"></span>
+  <span id="updated">BlackBook Glasses</span>
+</div>
+<script>
+(function () {
+  var deck = document.getElementById('deck');
+  var page = 0;
+  var errEl = document.getElementById('err');
+  var KEY = new URLSearchParams(location.search).get('k');
+  function apiUrl(vin, km) {
+    var u = '/api/value?vin=' + encodeURIComponent(vin) + '&km=' + encodeURIComponent(km);
+    if (KEY) u += '&k=' + encodeURIComponent(KEY);
+    return u;
+  }
+  function show(p) {
+    page = Math.max(0, Math.min(2, p));
+    deck.style.transform = 'translateX(' + (-page * 600) + 'px)';
+    for (var i = 0; i < 3; i++) document.getElementById('dot' + i).classList.toggle('on', page === i);
+  }
+  function next() { show(page + 1); }
+  function prev() { show(page - 1); }
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown') { next(); e.preventDefault(); }
+    if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') { prev(); e.preventDefault(); }
+    if (e.key === 'Enter' && document.activeElement && document.activeElement.id === 'km') { lookup(); }
+  });
+  var sx = 0, sy = 0;
+  document.addEventListener('touchstart', function (e) { sx = e.touches[0].clientX; sy = e.touches[0].clientY; }, { passive: true });
+  document.addEventListener('touchend', function (e) {
+    var dx = e.changedTouches[0].clientX - sx, dy = e.changedTouches[0].clientY - sy;
+    if (Math.abs(dx) > 40 && Math.abs(dx) > Math.abs(dy)) { dx < 0 ? next() : prev(); }
+  }, { passive: true });
+  var mx = null;
+  document.addEventListener('mousedown', function (e) { mx = e.clientX; });
+  document.addEventListener('mouseup', function (e) {
+    if (mx === null) return;
+    var dx = e.clientX - mx; mx = null;
+    if (Math.abs(dx) > 60) { dx < 0 ? next() : prev(); }
+  });
+  function fmt(n) { return n == null ? '—' : '$' + Number(n).toLocaleString('en-US'); }
+  function render(d) {
+    document.getElementById('res-vehicle').textContent = d.vehicle || d.vin;
+    document.getElementById('res-meta').textContent = 'Ontario · ' + Number(d.kilometers).toLocaleString('en-US') + ' km · ' + d.vin;
+    document.getElementById('w-avg').textContent = fmt(d.wholesale.adjusted.AVG);
+    document.getElementById('r-avg').textContent = fmt(d.retail.adjusted.AVG);
+    document.getElementById('t-avg').textContent = fmt(d.trade_in.adjusted.AVG);
+    document.getElementById('loan').textContent = fmt(d.wholesale.loan_value);
+    document.getElementById('res-note').textContent = d.source ? d.source : '';
+    var det = document.getElementById('detail');
+    function block(title, adj) {
+      var rows = Object.keys(adj).map(function (k) {
+        return '<div class="g-row"><span>' + title + ' · ' + k + '</span><b>' + fmt(adj[k]) + '</b></div>';
+      }).join('');
+      return rows;
+    }
+    det.innerHTML = '<div class="g-row"><span><b>Wholesale</b></span><b></b></div>' + block('W', d.wholesale.adjusted)
+      + '<div class="g-row"><span><b>Retail</b></span><b></b></div>' + block('R', d.retail.adjusted)
+      + '<div class="g-row"><span><b>Trade-in</b></span><b></b></div>' + block('T', d.trade_in.adjusted);
+    document.getElementById('updated').textContent = 'Updated ' + new Date(d.fetched_at).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+    try {
+      var rec = JSON.parse(localStorage.getItem('bb-recent') || '[]');
+      rec = [{ vin: d.vin, vehicle: d.vehicle, km: d.kilometers }].concat(rec.filter(function (r) { return r.vin !== d.vin; })).slice(0, 3);
+      localStorage.setItem('bb-recent', JSON.stringify(rec));
+      renderRecent();
+    } catch (e) {}
+  }
+  function renderRecent() {
+    var el = document.getElementById('recent');
+    try {
+      var rec = JSON.parse(localStorage.getItem('bb-recent') || '[]');
+      el.innerHTML = rec.map(function (r) {
+        return '<div>' + r.vehicle + ' · ' + Number(r.km).toLocaleString('en-US') + ' km</div>';
+      }).join('');
+    } catch (e) { el.innerHTML = ''; }
+  }
+  var busy = false;
+  async function lookup() {
+    var vin = document.getElementById('vin').value.trim().toUpperCase();
+    var km = document.getElementById('km').value.trim() || '56000';
+    if (vin.length !== 17) {
+      errEl.textContent = 'VIN must be 17 characters';
+      errEl.style.display = 'block';
+      return;
+    }
+    if (busy) return;
+    busy = true;
+    errEl.style.display = 'none';
+    document.getElementById('go').textContent = 'Looking up…';
+    try {
+      var r = await fetch(apiUrl(vin, km), { cache: 'no-store' });
+      var d = await r.json();
+      if (!r.ok) throw new Error(d.error || ('HTTP ' + r.status));
+      render(d);
+      show(1);
+    } catch (e) {
+      errEl.textContent = 'Lookup failed: ' + e.message;
+      errEl.style.display = 'block';
+    } finally {
+      busy = false;
+      document.getElementById('go').textContent = 'Get values';
+    }
+  }
+  document.getElementById('go').addEventListener('click', lookup);
+  document.getElementById('vin').addEventListener('input', function (e) { e.target.value = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, ''); });
+  renderRecent();
+  // Deep link: ?vin=…&km=… auto-looks up (phone can send the glasses a link).
+  var qs = new URLSearchParams(location.search);
+  var qvin = (qs.get('vin') || '').toUpperCase();
+  var qkm = qs.get('km') || '56000';
+  if (qvin.length === 17) {
+    document.getElementById('vin').value = qvin;
+    document.getElementById('km').value = qkm;
+    lookup();
+  }
+})();
+</script>
+</body>
+</html>
