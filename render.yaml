@@ -16,4 +16,4 @@ services:
       # BLACKBOOK_TEST_MODE        — 1 = serve verified test VIN only, 0 = live Cherry
       # CHERRY_USERNAME            — Cherry dealer login username
       # CHERRY_PASSWORD            — Cherry dealer login password
-      # CHERRY_API_BASE            — from browser network inspection, when known
+      # CHERRY_PROVINCE            — province code, default ON
