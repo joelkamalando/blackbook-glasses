@@ -123,7 +123,10 @@ def lookup(vin, km, region):
         if v.get(k)
     ).strip()
     result = {
-        "vin": v.get("vin") or vin,
+        # Use the requested full VIN: the GraphQL `vin` field echoes a
+        # truncated (first 9 chars) value, which broke the glasses app's
+        # VIN display and recent-lookup keys.
+        "vin": vin,
         "vehicle": vehicle_name,
         "year": _num(v.get("model_year")),
         "make": v.get("make"),
