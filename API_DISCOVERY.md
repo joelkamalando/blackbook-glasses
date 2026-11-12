@@ -87,11 +87,12 @@ US provider uses `query{states{abbreviation name car_region truck_region}}`.
 ## Other endpoints in the bundle
 
 - Retail listings GraphQL: same RetailAPI URL, `listings(uvc, zipcode, ...)`
-- Autocomplete: `query{autocomplete(searchtext:"..." maxresults:25 useevm:true){matching_vehicles{uvc style description matchcode enhanced_trim_match}}}`
+- Autocomplete: `query{autocomplete(searchtext:"..." maxresults:25 useevm:true){matching_vehicles{uvc style description matchcode enhanced_trim_match}}}` — implemented in `cherry_api.autocomplete()`, exposed as `GET /api/autocomplete`.
+- UVC lookup: same `usedvehicles` query as VIN but with `uvc: "…"` in
+  place of `vin:` — implemented in `cherry_api.lookup_by_uvc()`,
+  exposed as `GET /api/value_by_uvc`.
+- Drilldown: `query{drilldown(year:"..." make:"..." model:"..." series:"..."){class_list{...}}}` — stepwise: year → `year_list{make_list{name}}`, +make → `model_list{name}`, +model → `series_list{name}`, +series → `style_list{name uvc}`. Implemented in `cherry_api.drilldown()`, exposed as `GET /api/drilldown`. The no-year form needs a `vehicleclass` whose value is unknown, so the UI always starts from a typed/spoken year.
 - PDF: `query{ pdf (uvc:"...") { file_contents, error_count } }`
-- Drilldown: `query{drilldown(year:"..." make:"..." model:"..." series:"..."){class_list{...}}}`
-- Carfax/AutoCheck/CAC history via
-  `https://service.blackbookcloud.com/vehiclehistoryapi/BBD/{carfax,AutoCheck,cacautocheck}`
 
 ## Implications for the glasses backend
 

@@ -8,8 +8,9 @@
   * { margin: 0; padding: 0; box-sizing: border-box; }
   html, body { width: 600px; height: 600px; overflow: hidden; background: #000; }
   body { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; color: #fff; -webkit-font-smoothing: antialiased; user-select: none; -webkit-user-select: none; }
-  #deck { display: flex; width: 1800px; height: 600px; transition: transform .28s ease-out; }
+  #deck { display: flex; width: 2400px; height: 600px; transition: transform .28s ease-out; }
   .screen { width: 600px; height: 600px; flex: 0 0 600px; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 44px 44px 64px; text-align: center; }
+  .screen.scroll { justify-content: flex-start; overflow-y: auto; padding-top: 30px; }
   .label { font-size: 26px; letter-spacing: 6px; text-transform: uppercase; color: #7dd3fc; font-weight: 600; margin-bottom: 10px; }
   .bignum { font-size: 120px; line-height: 1; font-weight: 700; font-variant-numeric: tabular-nums; }
   .bignum small { font-size: 56px; color: #bbb; }
@@ -26,11 +27,27 @@
   input { width: 100%; font-size: 36px; padding: 16px 18px; margin: 10px 0; background: #111; color: #fff; border: 2px solid #333; border-radius: 12px; text-transform: uppercase; font-family: inherit; }
   input:focus { border-color: #7dd3fc; outline: none; }
   input.km { text-transform: none; }
+  input.search { text-transform: none; font-size: 30px; }
   button { width: 100%; font-size: 36px; font-weight: 700; padding: 18px; margin-top: 14px; background: #0ea5e9; color: #fff; border: none; border-radius: 12px; font-family: inherit; }
   button:active { background: #0284c7; }
+  button.secondary { background: #111; border: 2px solid #333; font-size: 28px; font-weight: 600; }
+  button.secondary:active { background: #222; }
+  button:disabled { opacity: .4; }
   .hint { font-size: 24px; color: #888; margin-top: 14px; line-height: 1.4; }
   .region { font-size: 26px; color: #4ade80; letter-spacing: 2px; text-transform: uppercase; font-weight: 600; margin-top: 6px; }
-  #footer { position: fixed; left: 0; right: 0; bottom: 0; height: 52px; width: 600px; display: flex; align-items: center; justify-content: center; gap: 14px; font-size: 22px; color: #888; background: #000; }
+  .vstatus { font-size: 24px; color: #7dd3fc; margin-top: 12px; min-height: 32px; line-height: 1.35; }
+  .vstatus.warn { color: #fbbf24; }
+  .vstatus.err { color: #f87171; }
+  .vinrow, .speakrow, .btnrow { display: flex; gap: 10px; width: 100%; }
+  .vinrow input { flex: 1; min-width: 0; }
+  .iconbtn { flex: 0 0 84px; width: 84px; margin: 10px 0; font-size: 40px; background: #111; border: 2px solid #333; padding: 12px 0; }
+  .iconbtn.listening { background: #7f1d1d; border-color: #ef4444; }
+  .speakrow button { font-size: 28px; }
+  .crumb { font-size: 24px; color: #aaa; margin: 8px 0 2px; min-height: 30px; }
+  .picklist { width: 100%; margin-top: 8px; text-align: left; max-height: 230px; overflow-y: auto; flex-shrink: 0; min-height: 60px; /* scroll containers get min-height:auto = 0 in a column flex layout and would collapse — keep it visible */ }
+  .picklist div { font-size: 26px; color: #ddd; padding: 10px 6px; border-bottom: 1px solid #1a1a1a; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .picklist div:active { background: #111; }
+  #footer { position: fixed; left: 0; right: 0; bottom: 0; height: 52px; width: 600px; display: flex; align-items: center; justify-content: center; gap: 14px; font-size: 22px; color: #888; background: #000; pointer-events: none; /* dots are indicators only — never block taps on low screen content */ }
   #footer .pagedot { width: 14px; height: 14px; border-radius: 50%; background: #333; }
   #footer .pagedot.on { background: #fff; }
   #err { position: fixed; left: 0; right: 0; top: 0; width: 600px; padding: 10px; background: #7f1d1d; color: #fff; font-size: 22px; text-align: center; display: none; z-index: 10; }
@@ -46,10 +63,19 @@
     <div class="label">Black Book &middot; Cherry</div>
     <div class="vehicle">Value a vehicle</div>
     <div class="region">Region: Ontario &middot; locked</div>
-    <input id="vin" type="text" placeholder="VIN — 17 characters" maxlength="17" autocomplete="off" autocapitalize="characters" spellcheck="false">
+    <div class="vinrow">
+      <input id="vin" type="text" placeholder="VIN — 17 characters" maxlength="17" autocomplete="off" autocapitalize="characters" spellcheck="false">
+      <button class="iconbtn" id="mic" title="Speak the VIN">&#127908;</button>
+    </div>
     <input id="km" class="km" type="number" inputmode="numeric" placeholder="Kilometres" value="56000" min="0" max="999999">
     <button id="go">Get values</button>
-    <div class="hint">Enter a VIN and km, or open with ?vin=…&amp;km=…<br>Swipe for results &middot; values are Cherry, Ontario</div>
+    <div class="btnrow">
+      <button class="secondary" id="scan">&#128247; Scan VIN</button>
+      <button class="secondary" id="by-vehicle">By vehicle &rarr;</button>
+    </div>
+    <input id="vin-photo" type="file" accept="image/*" capture="environment" style="display:none">
+    <div class="vstatus" id="voice-status"></div>
+    <div class="hint">Tap &#127908; to speak a VIN, or &#128247; to photograph one.<br>Swipe for results &middot; values are Cherry, Ontario</div>
     <div class="recent" id="recent"></div>
   </section>
   <!-- Screen 2: Results — AVG -->
@@ -60,6 +86,10 @@
     <div class="row"><span class="k">Retail</span><span class="v" id="r-avg">—</span></div>
     <div class="row"><span class="k">Trade-in</span><span class="v" id="t-avg">—</span></div>
     <div class="row"><span class="k">Loan value</span><span class="v" id="loan">—</span></div>
+    <div class="speakrow">
+      <button class="secondary" id="speak">&#128266; Read aloud</button>
+      <button class="secondary" id="autospeak">Auto-read: Off</button>
+    </div>
     <div class="hint" id="res-note"></div>
   </section>
   <!-- Screen 3: Detail — condition breakdown -->
@@ -68,11 +98,32 @@
     <div class="grid" id="detail"></div>
     <div class="hint" id="detail-note">Adjusted = Base + mileage (Ontario region: $0)</div>
   </section>
+  <!-- Screen 4: By vehicle — year/make/model/trim, no VIN needed -->
+  <section class="screen scroll" id="screen-vehicle">
+    <div class="label">By vehicle</div>
+    <div class="region">Region: Ontario &middot; locked</div>
+    <input id="veh-year" class="km" type="number" inputmode="numeric" placeholder="Year — e.g. 2021" min="1900" max="2100">
+    <div class="vinrow">
+      <input id="veh-search" class="search" type="text" placeholder="Type or speak a vehicle" autocomplete="off" spellcheck="false">
+      <button class="iconbtn" id="mic-veh" title="Speak the vehicle">&#127908;</button>
+    </div>
+    <button id="veh-search-btn">Search</button>
+    <div class="crumb" id="veh-crumb"></div>
+    <div class="picklist" id="picklist"></div>
+    <div class="vstatus" id="veh-status"></div>
+    <input id="veh-km" class="km" type="number" inputmode="numeric" placeholder="Kilometres" value="56000" min="0" max="999999">
+    <button id="veh-go" disabled>Get values</button>
+    <div class="btnrow">
+      <button class="secondary" id="veh-reset">Start over</button>
+      <button class="secondary" id="veh-back">&larr; VIN lookup</button>
+    </div>
+  </section>
 </div>
 <div id="footer">
   <span class="pagedot on" id="dot0"></span>
   <span class="pagedot" id="dot1"></span>
   <span class="pagedot" id="dot2"></span>
+  <span class="pagedot" id="dot3"></span>
   <span id="updated">BlackBook Glasses</span>
 </div>
 <script>
@@ -81,15 +132,23 @@
   var page = 0;
   var errEl = document.getElementById('err');
   var KEY = new URLSearchParams(location.search).get('k');
-  function apiUrl(vin, km) {
-    var u = '/api/value?vin=' + encodeURIComponent(vin) + '&km=' + encodeURIComponent(km);
-    if (KEY) u += '&k=' + encodeURIComponent(KEY);
-    return u;
+  var lastData = null;
+
+  function api(path, params) {
+    var u = path + '?';
+    var parts = [];
+    Object.keys(params).forEach(function (k) { parts.push(encodeURIComponent(k) + '=' + encodeURIComponent(params[k])); });
+    if (KEY) parts.push('k=' + encodeURIComponent(KEY));
+    return u + parts.join('&');
   }
+  function showErr(msg) { errEl.textContent = msg; errEl.style.display = 'block'; }
+  function hideErr() { errEl.style.display = 'none'; }
+
   function show(p) {
-    page = Math.max(0, Math.min(2, p));
+    page = Math.max(0, Math.min(3, p));
     deck.style.transform = 'translateX(' + (-page * 600) + 'px)';
-    for (var i = 0; i < 3; i++) document.getElementById('dot' + i).classList.toggle('on', page === i);
+    for (var i = 0; i < 4; i++) document.getElementById('dot' + i).classList.toggle('on', page === i);
+    if (page !== 1) stopSpeak(); // never keep reading results off-screen
   }
   function next() { show(page + 1); }
   function prev() { show(page - 1); }
@@ -111,10 +170,197 @@
     var dx = e.clientX - mx; mx = null;
     if (Math.abs(dx) > 60) { dx < 0 ? next() : prev(); }
   });
+
+  // ---- Results rendering ----
   function fmt(n) { return n == null ? '—' : '$' + Number(n).toLocaleString('en-US'); }
+  var ONES = ['', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten', 'eleven', 'twelve', 'thirteen', 'fourteen', 'fifteen', 'sixteen', 'seventeen', 'eighteen', 'nineteen'];
+  var TENS = ['', '', 'twenty', 'thirty', 'forty', 'fifty', 'sixty', 'seventy', 'eighty', 'ninety'];
+  function under1000(x) {
+    var s = '';
+    if (x >= 100) { s += ONES[Math.floor(x / 100)] + ' hundred'; x %= 100; if (x) s += ' '; }
+    if (x >= 20) { s += TENS[Math.floor(x / 10)]; if (x % 10) s += '-' + ONES[x % 10]; }
+    else if (x > 0) { s += ONES[x]; }
+    return s;
+  }
+  function numWords(n) {
+    n = Math.round(Number(n));
+    if (!isFinite(n)) return 'unknown';
+    if (n < 0) return 'minus ' + numWords(-n);
+    if (n === 0) return 'zero';
+    var parts = [];
+    if (n >= 1000) { parts.push(under1000(Math.floor(n / 1000)) + ' thousand'); n %= 1000; }
+    if (n > 0) parts.push(under1000(n));
+    return parts.join(' ');
+  }
+
+  // ---- Speech output ----
+  var autoSpeak = false;
+  try { autoSpeak = localStorage.getItem('bb-autospeak') === '1'; } catch (e) {}
+  function speakResults() {
+    if (!lastData) return;
+    if (!('speechSynthesis' in window)) { showErr('Spoken results are not supported in this browser'); return; }
+    stopSpeak();
+    var d = lastData;
+    var text = (d.vehicle || 'Vehicle') + '. Wholesale ' + numWords(d.wholesale.adjusted.AVG) + ' dollars. Retail ' + numWords(d.retail.adjusted.AVG) + ' dollars. Trade-in ' + numWords(d.trade_in.adjusted.AVG) + ' dollars. Loan value ' + numWords(d.wholesale.loan_value) + ' dollars.';
+    var u = new SpeechSynthesisUtterance(text);
+    u.rate = 1.0;
+    window.speechSynthesis.speak(u);
+  }
+  function stopSpeak() {
+    try { if ('speechSynthesis' in window) window.speechSynthesis.cancel(); } catch (e) {}
+  }
+  function refreshAutoSpeakBtn() {
+    document.getElementById('autospeak').textContent = 'Auto-read: ' + (autoSpeak ? 'On' : 'Off');
+  }
+  document.getElementById('speak').addEventListener('click', speakResults);
+  document.getElementById('autospeak').addEventListener('click', function () {
+    autoSpeak = !autoSpeak;
+    try { localStorage.setItem('bb-autospeak', autoSpeak ? '1' : '0'); } catch (e) {}
+    refreshAutoSpeakBtn();
+    if (autoSpeak) speakResults(); else stopSpeak();
+  });
+  refreshAutoSpeakBtn();
+
+  // ---- VIN check digit (ISO 3779) ----
+  var VIN_WEIGHTS = [8, 7, 6, 5, 4, 3, 2, 10, 0, 9, 8, 7, 6, 5, 4, 3, 2];
+  var VIN_VALUES = { A: 1, B: 2, C: 3, D: 4, E: 5, F: 6, G: 7, H: 8, J: 1, K: 2, L: 3, M: 4, N: 5, P: 7, R: 9, S: 2, T: 3, U: 4, V: 5, W: 6, X: 7, Y: 8, Z: 9 };
+  function vinCheck(vin) {
+    if (!/^[A-HJ-NPR-Z0-9]{17}$/.test(vin)) return false;
+    var sum = 0;
+    for (var i = 0; i < 17; i++) {
+      var ch = vin[i];
+      var v = /[0-9]/.test(ch) ? Number(ch) : VIN_VALUES[ch];
+      sum += v * VIN_WEIGHTS[i];
+    }
+    var r = sum % 11;
+    return vin[8] === (r === 10 ? 'X' : String(r));
+  }
+  // Find 17-char VIN candidates in free text (speech transcript or OCR).
+  // Strict pass keeps only VIN-legal chars; fallback fixes common
+  // misreads (I→1, O→0) first. Prefers a check-digit-valid candidate.
+  function vinCandidates(text) {
+    var up = (text || '').toUpperCase();
+    var seen = [], out = [];
+    function addRun(run) { for (var i = 0; i + 17 <= run.length; i++) { var c = run.slice(i, i + 17); if (seen.indexOf(c) < 0) { seen.push(c); out.push(c); } } }
+    (up.replace(/[^A-HJ-NPR-Z0-9]/g, '').match(/[A-HJ-NPR-Z0-9]{17,}/g) || []).forEach(addRun);
+    var fixed = up.replace(/[^A-Z0-9]/g, '').replace(/I/g, '1').replace(/O/g, '0').replace(/[^A-HJ-NPR-Z0-9]/g, '');
+    (fixed.match(/[A-HJ-NPR-Z0-9]{17,}/g) || []).forEach(addRun);
+    var valid = out.filter(vinCheck);
+    return valid.length ? valid : out;
+  }
+
+  // ---- Voice input ----
+  var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  var listeningBtn = null;
+  function setVoiceStatus(msg, cls) {
+    var el = document.getElementById('voice-status');
+    el.textContent = msg;
+    el.className = 'vstatus' + (cls ? ' ' + cls : '');
+  }
+  function handleVoice(text, target) {
+    var cands = vinCandidates(text);
+    if (cands.length) {
+      var vin = cands[0];
+      document.getElementById('vin').value = vin;
+      var warn = vinCheck(vin) ? '' : ' — check digit does not match, please double-check';
+      setVoiceStatus('Heard: ' + vin + ' — tap Get values to confirm' + warn, vinCheck(vin) ? '' : 'warn');
+      show(0);
+      return;
+    }
+    var ym = text.match(/\b(19|20)\d\d\b/);
+    if (ym) {
+      // A year plus words: hand off to the By-vehicle screen.
+      show(3);
+      document.getElementById('veh-year').value = ym[0];
+      var words = text.replace(/\b(19|20)\d\d\b/, '').trim();
+      if (words) document.getElementById('veh-search').value = words;
+      vehReset(false);
+      vehSearch(text);
+      return;
+    }
+    setVoiceStatus('Heard: "' + text + '" — say a 17-character VIN, or a year and vehicle.', 'warn');
+  }
+  function listen(btn, target) {
+    if (!SR) { showErr('Voice input is not supported in this browser'); return; }
+    if (listeningBtn) return;
+    var rec;
+    try { rec = new SR(); } catch (e) { showErr('Could not start voice input'); return; }
+    rec.lang = 'en-US';
+    rec.interimResults = false;
+    rec.maxAlternatives = 1;
+    listeningBtn = btn;
+    btn.classList.add('listening');
+    btn.textContent = '●';
+    rec.onresult = function (e) {
+      var text = e.results[0][0].transcript || '';
+      handleVoice(text, target);
+    };
+    rec.onerror = function (e) {
+      setVoiceStatus('Voice input failed (' + (e.error || 'error') + ') — try again or type it.', 'err');
+    };
+    rec.onend = function () {
+      btn.classList.remove('listening');
+      btn.textContent = '🎤';
+      listeningBtn = null;
+    };
+    try { rec.start(); } catch (e) {
+      btn.classList.remove('listening');
+      btn.textContent = '🎤';
+      listeningBtn = null;
+      showErr('Could not start voice input');
+    }
+  }
+  document.getElementById('mic').addEventListener('click', function () { listen(this, 'vin'); });
+  document.getElementById('mic-veh').addEventListener('click', function () { listen(this, 'veh'); });
+
+  // ---- VIN photo scan (OCR, Tesseract.js via CDN, lazy-loaded) ----
+  var tessPromise = null;
+  function loadTesseract() {
+    if (tessPromise) return tessPromise;
+    tessPromise = new Promise(function (resolve, reject) {
+      if (window.Tesseract) return resolve();
+      var s = document.createElement('script');
+      s.src = 'https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js';
+      s.onload = function () { window.Tesseract ? resolve() : reject(new Error('reader did not load')); };
+      s.onerror = function () { reject(new Error('could not load the text reader (CDN)')); };
+      document.head.appendChild(s);
+      setTimeout(function () { if (!window.Tesseract) reject(new Error('text reader timed out')); }, 20000);
+    });
+    tessPromise.catch(function () { tessPromise = null; });
+    return tessPromise;
+  }
+  document.getElementById('scan').addEventListener('click', function () {
+    document.getElementById('vin-photo').click();
+  });
+  document.getElementById('vin-photo').addEventListener('change', function (e) {
+    var file = e.target.files && e.target.files[0];
+    e.target.value = ''; // allow re-picking the same photo
+    if (!file) return;
+    setVoiceStatus('Reading photo…');
+    loadTesseract().then(function () {
+      return window.Tesseract.recognize(file, 'eng');
+    }).then(function (res) {
+      var text = (res && res.data && res.data.text) || '';
+      var cands = vinCandidates(text);
+      if (cands.length) {
+        var vin = cands[0];
+        document.getElementById('vin').value = vin;
+        var warn = vinCheck(vin) ? '' : ' — check digit does not match, please double-check';
+        setVoiceStatus('Photo read: ' + vin + ' — tap Get values to confirm' + warn, vinCheck(vin) ? '' : 'warn');
+      } else {
+        var raw = text.replace(/\s+/g, ' ').trim().slice(0, 120);
+        setVoiceStatus('No VIN found in the photo' + (raw ? ' (read: "' + raw + '")' : '') + ' — tap Scan VIN to retake.', 'warn');
+      }
+    }).catch(function (err) {
+      setVoiceStatus('Could not read the photo: ' + (err && err.message ? err.message : err) + ' — check connection and try again.', 'err');
+    });
+  });
+
   function render(d) {
+    lastData = d;
     document.getElementById('res-vehicle').textContent = d.vehicle || d.vin;
-    document.getElementById('res-meta').textContent = 'Ontario · ' + Number(d.kilometers).toLocaleString('en-US') + ' km · ' + d.vin;
+    var idLine = (d.vin && d.vin.length === 17) ? d.vin : (d.uvc ? 'UVC ' + d.uvc : (d.vin || ''));
+    document.getElementById('res-meta').textContent = 'Ontario · ' + Number(d.kilometers).toLocaleString('en-US') + ' km · ' + idLine;
     document.getElementById('w-avg').textContent = fmt(d.wholesale.adjusted.AVG);
     document.getElementById('r-avg').textContent = fmt(d.retail.adjusted.AVG);
     document.getElementById('t-avg').textContent = fmt(d.trade_in.adjusted.AVG);
@@ -122,21 +368,24 @@
     document.getElementById('res-note').textContent = d.source ? d.source : '';
     var det = document.getElementById('detail');
     function block(title, adj) {
-      var rows = Object.keys(adj).map(function (k) {
+      return Object.keys(adj).map(function (k) {
         return '<div class="g-row"><span>' + title + ' · ' + k + '</span><b>' + fmt(adj[k]) + '</b></div>';
       }).join('');
-      return rows;
     }
     det.innerHTML = '<div class="g-row"><span><b>Wholesale</b></span><b></b></div>' + block('W', d.wholesale.adjusted)
       + '<div class="g-row"><span><b>Retail</b></span><b></b></div>' + block('R', d.retail.adjusted)
       + '<div class="g-row"><span><b>Trade-in</b></span><b></b></div>' + block('T', d.trade_in.adjusted);
-    document.getElementById('updated').textContent = 'Updated ' + new Date(d.fetched_at).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+    document.getElementById('updated').textContent = d.fetched_at
+      ? 'Updated ' + new Date(d.fetched_at).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
+      : 'BlackBook Glasses';
     try {
       var rec = JSON.parse(localStorage.getItem('bb-recent') || '[]');
-      rec = [{ vin: d.vin, vehicle: d.vehicle, km: d.kilometers }].concat(rec.filter(function (r) { return r.vin !== d.vin; })).slice(0, 3);
+      var key = d.uvc || d.vin;
+      rec = [{ vin: key, vehicle: d.vehicle, km: d.kilometers }].concat(rec.filter(function (r) { return r.vin !== key; })).slice(0, 3);
       localStorage.setItem('bb-recent', JSON.stringify(rec));
       renderRecent();
     } catch (e) {}
+    if (autoSpeak) speakResults();
   }
   function renderRecent() {
     var el = document.getElementById('recent');
@@ -151,24 +400,20 @@
   async function lookup() {
     var vin = document.getElementById('vin').value.trim().toUpperCase();
     var km = document.getElementById('km').value.trim() || '56000';
-    if (vin.length !== 17) {
-      errEl.textContent = 'VIN must be 17 characters';
-      errEl.style.display = 'block';
-      return;
-    }
+    if (vin.length !== 17) { showErr('VIN must be 17 characters'); return; }
+    if (!vinCheck(vin)) setVoiceStatus('Note: that VIN fails the check-digit test — it may be mistyped.', 'warn');
     if (busy) return;
     busy = true;
-    errEl.style.display = 'none';
+    hideErr();
     document.getElementById('go').textContent = 'Looking up…';
     try {
-      var r = await fetch(apiUrl(vin, km), { cache: 'no-store' });
+      var r = await fetch(api('/api/value', { vin: vin, km: km }), { cache: 'no-store' });
       var d = await r.json();
       if (!r.ok) throw new Error(d.error || ('HTTP ' + r.status));
       render(d);
       show(1);
     } catch (e) {
-      errEl.textContent = 'Lookup failed: ' + e.message;
-      errEl.style.display = 'block';
+      showErr('Lookup failed: ' + e.message);
     } finally {
       busy = false;
       document.getElementById('go').textContent = 'Get values';
@@ -176,7 +421,122 @@
   }
   document.getElementById('go').addEventListener('click', lookup);
   document.getElementById('vin').addEventListener('input', function (e) { e.target.value = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, ''); });
+  document.getElementById('by-vehicle').addEventListener('click', function () { show(3); });
+  document.getElementById('veh-back').addEventListener('click', function () { show(0); });
   renderRecent();
+
+  // ---- By vehicle: autocomplete + stepwise drilldown ----
+  var veh = { year: '', make: '', model: '', series: '', uvc: '', desc: '' };
+  var pickEl = document.getElementById('picklist');
+  var crumbEl = document.getElementById('veh-crumb');
+  var vehStatusEl = document.getElementById('veh-status');
+  function vehStatus(msg, cls) {
+    vehStatusEl.textContent = msg;
+    vehStatusEl.className = 'vstatus' + (cls ? ' ' + cls : '');
+  }
+  function vehCrumb() {
+    var parts = [veh.year, veh.make, veh.model, veh.series].filter(function (x) { return x; });
+    crumbEl.textContent = parts.join(' › ');
+  }
+  function vehReset(clearYear) {
+    veh.make = ''; veh.model = ''; veh.series = ''; veh.uvc = ''; veh.desc = '';
+    if (clearYear !== false) document.getElementById('veh-year').value = '';
+    document.getElementById('veh-go').disabled = true;
+    vehCrumb();
+  }
+  function showPick(items, onPick) {
+    pickEl.innerHTML = '';
+    items.forEach(function (it) {
+      var div = document.createElement('div');
+      div.textContent = it.label;
+      div.addEventListener('click', function () { onPick(it); });
+      pickEl.appendChild(div);
+    });
+  }
+  function vehSelected(desc, uvc) {
+    veh.uvc = uvc;
+    veh.desc = desc;
+    document.getElementById('veh-go').disabled = false;
+    vehStatus('Selected: ' + desc + ' — enter km and tap Get values.');
+  }
+  async function vehDrilldown() {
+    var params = { year: veh.year };
+    if (veh.make) params.make = veh.make;
+    if (veh.model) params.model = veh.model;
+    if (veh.series) params.series = veh.series;
+    vehStatus('Loading…');
+    try {
+      var r = await fetch(api('/api/drilldown', params), { cache: 'no-store' });
+      var d = await r.json();
+      if (!r.ok) throw new Error(d.error || ('HTTP ' + r.status));
+      vehStatus('');
+      var level = d.level;
+      if (!d.items || !d.items.length) { vehStatus('Nothing found at this step — try a different year or spelling.', 'warn'); return; }
+      showPick(d.items.map(function (it) { return { label: it.name, name: it.name, uvc: it.uvc || '' }; }), function (it) {
+        if (level === 'make') { veh.make = it.name; veh.model = ''; veh.series = ''; vehCrumb(); vehDrilldown(); }
+        else if (level === 'model') { veh.model = it.name; veh.series = ''; vehCrumb(); vehDrilldown(); }
+        else if (level === 'series') { veh.series = it.name; vehCrumb(); vehDrilldown(); }
+        else { vehSelected([veh.year, veh.make, veh.model, veh.series, it.name].filter(function (x) { return x; }).join(' '), it.uvc); }
+      });
+    } catch (e) {
+      vehStatus('Drilldown failed: ' + e.message, 'err');
+    }
+  }
+  async function vehSearch(prefill) {
+    var text = prefill || document.getElementById('veh-search').value.trim();
+    if (!text) { vehStatus('Type or speak a vehicle first, e.g. 2021 Mercedes CLA250.', 'warn'); return; }
+    vehStatus('Searching…');
+    try {
+      var r = await fetch(api('/api/autocomplete', { text: text }), { cache: 'no-store' });
+      var d = await r.json();
+      if (!r.ok) throw new Error(d.error || ('HTTP ' + r.status));
+      var cands = d.candidates || [];
+      if (!cands.length) { vehStatus('No matches for "' + text + '".', 'warn'); return; }
+      vehStatus('');
+      showPick(cands.map(function (c) { return { label: c.description, uvc: c.uvc, desc: c.description }; }), function (it) {
+        vehSelected(it.desc, it.uvc);
+      });
+    } catch (e) {
+      vehStatus('Search failed: ' + e.message, 'err');
+    }
+  }
+  async function lookupByUvc() {
+    if (!veh.uvc) return;
+    var km = document.getElementById('veh-km').value.trim() || '56000';
+    if (busy) return;
+    busy = true;
+    hideErr();
+    document.getElementById('veh-go').textContent = 'Looking up…';
+    try {
+      var r = await fetch(api('/api/value_by_uvc', { uvc: veh.uvc, km: km }), { cache: 'no-store' });
+      var d = await r.json();
+      if (!r.ok) throw new Error(d.error || ('HTTP ' + r.status));
+      render(d);
+      show(1);
+    } catch (e) {
+      showErr('Lookup failed: ' + e.message);
+    } finally {
+      busy = false;
+      document.getElementById('veh-go').textContent = 'Get values';
+    }
+  }
+  document.getElementById('veh-search-btn').addEventListener('click', function () { vehSearch(); });
+  document.getElementById('veh-search').addEventListener('keydown', function (e) { if (e.key === 'Enter') vehSearch(); });
+  document.getElementById('veh-go').addEventListener('click', lookupByUvc);
+  document.getElementById('veh-reset').addEventListener('click', function () { vehReset(true); pickEl.innerHTML = ''; vehStatus(''); });
+  document.getElementById('veh-year').addEventListener('change', function () {
+    var y = this.value.trim();
+    if (/^(19|20)\d\d$/.test(y)) {
+      veh.year = y;
+      veh.make = ''; veh.model = ''; veh.series = ''; veh.uvc = ''; veh.desc = '';
+      document.getElementById('veh-go').disabled = true;
+      vehCrumb();
+      vehDrilldown();
+    } else if (y) {
+      vehStatus('Enter a 4-digit year, e.g. 2021.', 'warn');
+    }
+  });
+
   // Deep link: ?vin=…&km=… auto-looks up (phone can send the glasses a link).
   var qs = new URLSearchParams(location.search);
   var qvin = (qs.get('vin') || '').toUpperCase();
