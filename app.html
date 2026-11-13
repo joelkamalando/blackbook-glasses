@@ -7,9 +7,9 @@
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
   html, body { width: 600px; height: 600px; overflow: hidden; background: #000; }
-  body { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; color: #fff; -webkit-font-smoothing: antialiased; user-select: none; -webkit-user-select: none; }
+  body { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; color: #fff; -webkit-font-smoothing: antialiased; user-select: none; -webkit-user-select: none; touch-action: manipulation; }
   #deck { display: flex; width: 2400px; height: 600px; transition: transform .28s ease-out; }
-  .screen { width: 600px; height: 600px; flex: 0 0 600px; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 44px 44px 64px; text-align: center; }
+  .screen { width: 600px; height: 600px; flex: 0 0 600px; display: flex; flex-direction: column; align-items: center; justify-content: safe center; padding: 28px 36px 58px; text-align: center; overflow-y: auto; }
   .screen.scroll { justify-content: flex-start; overflow-y: auto; padding-top: 30px; }
   .label { font-size: 26px; letter-spacing: 6px; text-transform: uppercase; color: #7dd3fc; font-weight: 600; margin-bottom: 10px; }
   .bignum { font-size: 120px; line-height: 1; font-weight: 700; font-variant-numeric: tabular-nums; }
@@ -24,18 +24,18 @@
   .grid { width: 100%; margin-top: 8px; }
   .grid .g-row { display: flex; justify-content: space-between; font-size: 30px; padding: 8px 6px; border-bottom: 1px solid #1a1a1a; color: #ddd; }
   .grid .g-row b { font-variant-numeric: tabular-nums; }
-  input { width: 100%; font-size: 36px; padding: 16px 18px; margin: 10px 0; background: #111; color: #fff; border: 2px solid #333; border-radius: 12px; text-transform: uppercase; font-family: inherit; }
+  input { width: 100%; font-size: 36px; padding: 14px 18px; margin: 8px 0; background: #111; color: #fff; border: 2px solid #333; border-radius: 12px; text-transform: uppercase; font-family: inherit; touch-action: manipulation; }
   input:focus { border-color: #7dd3fc; outline: none; }
   input.km { text-transform: none; }
   input.search { text-transform: none; font-size: 30px; }
-  button { width: 100%; font-size: 36px; font-weight: 700; padding: 18px; margin-top: 14px; background: #0ea5e9; color: #fff; border: none; border-radius: 12px; font-family: inherit; }
+  button { width: 100%; font-size: 36px; font-weight: 700; padding: 15px; margin-top: 10px; background: #0ea5e9; color: #fff; border: none; border-radius: 12px; font-family: inherit; touch-action: manipulation; }
   button:active { background: #0284c7; }
   button.secondary { background: #111; border: 2px solid #333; font-size: 28px; font-weight: 600; }
   button.secondary:active { background: #222; }
   button:disabled { opacity: .4; }
-  .hint { font-size: 24px; color: #888; margin-top: 14px; line-height: 1.4; }
+  .hint { font-size: 22px; color: #888; margin-top: 10px; line-height: 1.4; }
   .region { font-size: 26px; color: #4ade80; letter-spacing: 2px; text-transform: uppercase; font-weight: 600; margin-top: 6px; }
-  .vstatus { font-size: 24px; color: #7dd3fc; margin-top: 12px; min-height: 32px; line-height: 1.35; }
+  .vstatus { font-size: 24px; color: #7dd3fc; margin-top: 10px; min-height: 32px; line-height: 1.35; }
   .vstatus.warn { color: #fbbf24; }
   .vstatus.err { color: #f87171; }
   .vinrow, .speakrow, .btnrow { display: flex; gap: 10px; width: 100%; }
@@ -44,14 +44,16 @@
   .iconbtn.listening { background: #7f1d1d; border-color: #ef4444; }
   .speakrow button { font-size: 28px; }
   .crumb { font-size: 24px; color: #aaa; margin: 8px 0 2px; min-height: 30px; }
-  .picklist { width: 100%; margin-top: 8px; text-align: left; max-height: 230px; overflow-y: auto; flex-shrink: 0; min-height: 60px; /* scroll containers get min-height:auto = 0 in a column flex layout and would collapse — keep it visible */ }
-  .picklist div { font-size: 26px; color: #ddd; padding: 10px 6px; border-bottom: 1px solid #1a1a1a; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .picklist div:active { background: #111; }
+  .picklist { width: 100%; margin-top: 8px; text-align: left; max-height: 150px; overflow-y: auto; flex-shrink: 0; min-height: 60px; /* scroll containers get min-height:auto = 0 in a column flex layout and would collapse — keep it visible */ }
+  /* Pick items are real <button>s (not divs) so taps, D-pad focus and
+     keyboard Enter/Space all activate them on the glasses. */
+  .picklist button.pickitem { display: block; width: 100%; background: none; border: none; border-bottom: 1px solid #1a1a1a; border-radius: 0; text-align: left; font-size: 26px; font-weight: 400; color: #ddd; padding: 10px 6px; margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .picklist button.pickitem:active { background: #111; }
   #footer { position: fixed; left: 0; right: 0; bottom: 0; height: 52px; width: 600px; display: flex; align-items: center; justify-content: center; gap: 14px; font-size: 22px; color: #888; background: #000; pointer-events: none; /* dots are indicators only — never block taps on low screen content */ }
   #footer .pagedot { width: 14px; height: 14px; border-radius: 50%; background: #333; }
   #footer .pagedot.on { background: #fff; }
   #err { position: fixed; left: 0; right: 0; top: 0; width: 600px; padding: 10px; background: #7f1d1d; color: #fff; font-size: 22px; text-align: center; display: none; z-index: 10; }
-  .recent { width: 100%; margin-top: 16px; text-align: left; }
+  .recent { width: 100%; margin-top: 10px; text-align: left; }
   .recent div { font-size: 26px; color: #ddd; padding: 8px 6px; border-bottom: 1px solid #1a1a1a; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 </style>
 </head>
@@ -148,6 +150,10 @@
     page = Math.max(0, Math.min(3, p));
     deck.style.transform = 'translateX(' + (-page * 600) + 'px)';
     for (var i = 0; i < 4; i++) document.getElementById('dot' + i).classList.toggle('on', page === i);
+    // Only the visible screen can receive taps — off-screen screens must
+    // never intercept a tap, whatever the webview's viewport width is.
+    var screens = document.querySelectorAll('.screen');
+    for (var s = 0; s < screens.length; s++) screens[s].style.pointerEvents = (s === page) ? 'auto' : 'none';
     if (page !== 1) stopSpeak(); // never keep reading results off-screen
   }
   function next() { show(page + 1); }
@@ -157,16 +163,28 @@
     if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') { prev(); e.preventDefault(); }
     if (e.key === 'Enter' && document.activeElement && document.activeElement.id === 'km') { lookup(); }
   });
-  var sx = 0, sy = 0;
-  document.addEventListener('touchstart', function (e) { sx = e.touches[0].clientX; sy = e.touches[0].clientY; }, { passive: true });
+  // Swipe between screens — but NEVER when the gesture starts on a control
+  // or inside the scrollable By-vehicle screen. On the glasses' temple
+  // touchpad a tap is imprecise: a tap on Get values with a little finger
+  // drift used to be read as a swipe (page changed, button never fired) or
+  // a scroll-drag on the By-vehicle screen flipped the page instead.
+  function swipeOK(t) {
+    if (!t || !t.closest) return true;
+    if (t.closest('button, input, select, textarea, a, .picklist')) return false;
+    if (t.closest('.screen.scroll')) return false;
+    return true;
+  }
+  var sx = 0, sy = 0, sOK = true;
+  document.addEventListener('touchstart', function (e) { sx = e.touches[0].clientX; sy = e.touches[0].clientY; sOK = swipeOK(e.target); }, { passive: true });
   document.addEventListener('touchend', function (e) {
+    if (!sOK) return;
     var dx = e.changedTouches[0].clientX - sx, dy = e.changedTouches[0].clientY - sy;
     if (Math.abs(dx) > 40 && Math.abs(dx) > Math.abs(dy)) { dx < 0 ? next() : prev(); }
   }, { passive: true });
-  var mx = null;
-  document.addEventListener('mousedown', function (e) { mx = e.clientX; });
+  var mx = null, mOK = true;
+  document.addEventListener('mousedown', function (e) { mx = e.clientX; mOK = swipeOK(e.target); });
   document.addEventListener('mouseup', function (e) {
-    if (mx === null) return;
+    if (mx === null || !mOK) { mx = null; return; }
     var dx = e.clientX - mx; mx = null;
     if (Math.abs(dx) > 60) { dx < 0 ? next() : prev(); }
   });
@@ -421,6 +439,7 @@
   }
   document.getElementById('go').addEventListener('click', lookup);
   document.getElementById('vin').addEventListener('input', function (e) { e.target.value = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, ''); });
+  document.getElementById('vin').addEventListener('keydown', function (e) { if (e.key === 'Enter') lookup(); });
   document.getElementById('by-vehicle').addEventListener('click', function () { show(3); });
   document.getElementById('veh-back').addEventListener('click', function () { show(0); });
   renderRecent();
@@ -447,17 +466,23 @@
   function showPick(items, onPick) {
     pickEl.innerHTML = '';
     items.forEach(function (it) {
-      var div = document.createElement('div');
-      div.textContent = it.label;
-      div.addEventListener('click', function () { onPick(it); });
-      pickEl.appendChild(div);
+      var btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'pickitem';
+      btn.textContent = it.label;
+      btn.addEventListener('click', function () { onPick(it); });
+      pickEl.appendChild(btn);
     });
+    // The list sits mid-screen; bring it into view so a tap can reach it.
+    try { pickEl.scrollIntoView({ block: 'nearest' }); } catch (e) {}
   }
   function vehSelected(desc, uvc) {
     veh.uvc = uvc;
     veh.desc = desc;
     document.getElementById('veh-go').disabled = false;
     vehStatus('Selected: ' + desc + ' — enter km and tap Get values.');
+    // Get values sits below the fold on this screen — scroll it into view.
+    try { document.getElementById('veh-go').scrollIntoView({ block: 'nearest' }); } catch (e) {}
   }
   async function vehDrilldown() {
     var params = { year: veh.year };
@@ -524,8 +549,8 @@
   document.getElementById('veh-search').addEventListener('keydown', function (e) { if (e.key === 'Enter') vehSearch(); });
   document.getElementById('veh-go').addEventListener('click', lookupByUvc);
   document.getElementById('veh-reset').addEventListener('click', function () { vehReset(true); pickEl.innerHTML = ''; vehStatus(''); });
-  document.getElementById('veh-year').addEventListener('change', function () {
-    var y = this.value.trim();
+  function yearChanged() {
+    var y = document.getElementById('veh-year').value.trim();
     if (/^(19|20)\d\d$/.test(y)) {
       veh.year = y;
       veh.make = ''; veh.model = ''; veh.series = ''; veh.uvc = ''; veh.desc = '';
@@ -535,7 +560,19 @@
     } else if (y) {
       vehStatus('Enter a 4-digit year, e.g. 2021.', 'warn');
     }
+  }
+  document.getElementById('veh-year').addEventListener('change', yearChanged);
+  // Also fire while typing (debounced) — on the glasses the change event
+  // only fires on blur, so a typed year otherwise did nothing until the
+  // user tapped elsewhere.
+  var yearTimer = null;
+  document.getElementById('veh-year').addEventListener('input', function () {
+    clearTimeout(yearTimer);
+    yearTimer = setTimeout(yearChanged, 500);
   });
+
+  // Initial state: only the lookup screen can receive taps.
+  show(0);
 
   // Deep link: ?vin=…&km=… auto-looks up (phone can send the glasses a link).
   var qs = new URLSearchParams(location.search);

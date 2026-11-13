@@ -65,6 +65,24 @@ the new endpoints return 503 "live lookup only", except
 UVC "TEST") and `/api/value_by_uvc` with uvc "TEST" (the fixture), so
 the By-vehicle flow can be tested end-to-end locally.
 
+## Tap fix (2026-11-12, on-glasses report)
+
+Joel reported on the glasses that typing the VIN worked but buttons
+(Get values, Scan, By vehicle, picklist items) did not respond. Cause:
+the deck's swipe handler treated any touch/mouse gesture starting on
+a button as a page swipe, so an imprecise temple-touchpad tap flipped
+the page (or was swallowed) instead of clicking; and the By-vehicle
+screen was ~940 px tall in a 600 px viewport, so km / Get values sat
+below the fold. Fix (app.html only): swipes are ignored when the
+gesture starts on a button/input/picklist or inside the scrollable
+By-vehicle screen (background swipes still navigate); only the visible
+screen receives taps (`pointer-events`); picklist items are real
+`<button>`s; the By-vehicle screen auto-scrolls Get values into view
+after a selection; a typed 4-digit year now starts the drilldown
+without waiting for blur; Enter on the VIN field runs the lookup.
+Verified with touch taps in headless Chromium (precise tap, drift tap,
+background swipe, full By-vehicle flow).
+
 ## Test VIN (verified live in Cherry, Ontario + 56,000 km, 2026-11-12)
 
 VIN `W1K5J4HB7MN217673` = 2021 Mercedes-Benz CLA250 4D Coupe 4MATIC
